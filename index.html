@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live HTML + CSS Editor</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- CodeMirror 5 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+
+<style>
+  :root {
+    --bg: #0D0D0D;
+    --panel: #161614;
+    --panel-header: #1c1c1a;
+    --border: #2a2a28;
+    --text: #F1F0EB;
+    --muted: #8a8a85;
+    --accent: #FDB927;
+    --accent-hover: #ffc949;
+    --danger: #ff5555;
+    --success: #50fa7b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    height: 60px;
+    background: var(--panel);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    color: #000;
+    display: grid;
+    place-items: center;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 16px;
+    letter-spacing: -1px;
+  }
+
+  .brand-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .brand-title span {
+    color: var(--accent);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: #000;
+  }
+
+  .btn svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.5;
+  }
+
+  /* ============ MAIN GRID ============ */
+  main {
+    height: calc(100vh - 60px);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid var(--border);
+    background: var(--panel);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .panel:last-child {
+    border-right: none;
+  }
+
+  .panel-header {
+    height: 42px;
+    background: var(--panel-header);
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    flex-shrink: 0;
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .lang-dot {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+  }
+
+  .dot-html { background: #e34c26; }
+  .dot-css { background: #2965f1; }
+  .dot-preview { background: var(--accent); }
+
+  .panel-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .panel-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .panel-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+  }
+
+  /* CodeMirror overrides */
+  .CodeMirror {
+    height: 100% !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    background: var(--panel) !important;
+  }
+
+  .CodeMirror-gutters {
+    background: var(--panel) !important;
+    border-right: 1px solid var(--border) !important;
+  }
+
+  .CodeMirror-linenumber {
+    color: var(--muted) !important;
+    font-size: 11px !important;
+  }
+
+  .CodeMirror-cursor {
+    border-left-color: var(--accent) !important;
+  }
+
+  .CodeMirror-selected {
+    background: rgba(253, 185, 39, 0.15) !important;
+  }
+
+  /* Preview iframe */
+  .preview-container {
+    height: 100%;
+    background: #fff;
+    position: relative;
+  }
+
+  #preview {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  }
+
+  /* ============ TOAST ============ */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--panel);
+    border: 1.5px solid var(--accent);
+    color: var(--text);
+    padding: 12px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.25s ease;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      overflow-y: auto;
+    }
+
+    .panel {
+      border-right: none;
+      border-bottom: 2px solid var(--border);
+      min-height: 300px;
+    }
+
+    .panel:last-child {
+      border-bottom: none;
+    }
+
+    .brand-title {
+      font-size: 13px;
+    }
+
+    .btn span.btn-label {
+      display: none;
+    }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--panel);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">L</div>
+    <div class="brand-title">Live<span>/</span>Editor</div>
+  </div>
+
+  <div class="header-actions">
+    <button class="btn" id="btn-reset" title="Reset code về mặc định">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9M3 12l4-4M3 12l4 4"/></svg>
+      <span class="btn-label">Reset</span>
+    </button>
+    <button class="btn" id="btn-open" title="Mở preview ở tab mới">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M10 14L21 3M18 13v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h7"/></svg>
+      <span class="btn-label">Mở tab mới</span>
+    </button>
+    <button class="btn btn-primary" id="btn-download" title="Tải file HTML đã kết hợp">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      <span class="btn-label">Download HTML</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- HTML Panel -->
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="lang-dot dot-html"></span>
+        HTML
+      </div>
+      <div class="panel-actions">
+        <button class="panel-btn" data-copy="html">Copy</button>
+        <button class="panel-btn" data-clear="html">Clear</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <textarea id="html-code"></textarea>
+    </div>
+  </section>
+
+  <!-- CSS Panel -->
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="lang-dot dot-css"></span>
+        CSS
+      </div>
+      <div class="panel-actions">
+        <button class="panel-btn" data-copy="css">Copy</button>
+        <button class="panel-btn" data-clear="css">Clear</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <textarea id="css-code"></textarea>
+    </div>
+  </section>
+
+  <!-- Preview Panel -->
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="lang-dot dot-preview"></span>
+        Live Preview
+      </div>
+      <div class="panel-actions">
+        <button class="panel-btn" id="btn-refresh">Refresh</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="preview-container">
+        <iframe id="preview" title="Live Preview"></iframe>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast">Đã copy vào clipboard</div>
+
+<script>
+  // ============ DEFAULT SAMPLE CODE ============
+  const DEFAULT_HTML = `<div class="card">
+  <h1>Xin chào <span>Storimatic</span></h1>
+  <p>Đây là live editor để test HTML + CSS. Sửa code ở bên trái, preview sẽ tự cập nhật.</p>
+  <button class="cta">Bắt đầu</button>
+</div>`;
+
+  const DEFAULT_CSS = `body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #F1F0EB;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.card {
+  background: #0D0D0D;
+  color: #F1F0EB;
+  padding: 48px 40px;
+  max-width: 480px;
+  border: 3px solid #FDB927;
+}
+
+h1 {
+  font-size: 42px;
+  line-height: 1.05;
+  margin: 0 0 16px;
+  letter-spacing: -1px;
+}
+
+h1 span {
+  color: #FDB927;
+}
+
+p {
+  margin: 0 0 28px;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+.cta {
+  background: #FDB927;
+  color: #0D0D0D;
+  border: none;
+  padding: 14px 28px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+}`;
+
+  // ============ INIT EDITORS ============
+  const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-code'), {
+    mode: 'htmlmixed',
+    theme: 'dracula',
+    lineNumbers: true,
+    lineWrapping: true,
+    autoCloseTags: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    indentUnit: 2,
+    tabSize: 2,
+    indentWithTabs: false,
+  });
+
+  const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-code'), {
+    mode: 'css',
+    theme: 'dracula',
+    lineNumbers: true,
+    lineWrapping: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    indentUnit: 2,
+    tabSize: 2,
+    indentWithTabs: false,
+  });
+
+  // ============ LOAD FROM LOCALSTORAGE OR DEFAULT ============
+  const savedHtml = localStorage.getItem('live-editor-html');
+  const savedCss = localStorage.getItem('live-editor-css');
+
+  htmlEditor.setValue(savedHtml !== null ? savedHtml : DEFAULT_HTML);
+  cssEditor.setValue(savedCss !== null ? savedCss : DEFAULT_CSS);
+
+  // ============ LIVE PREVIEW ============
+  const preview = document.getElementById('preview');
+  let updateTimer = null;
+
+  function buildDocument(htmlCode, cssCode) {
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview</title>
+<style>
+${cssCode}
+</style>
+</head>
+<body>
+${htmlCode}
+</body>
+</html>`;
+  }
+
+  function updatePreview() {
+    const htmlCode = htmlEditor.getValue();
+    const cssCode = cssEditor.getValue();
+    const doc = buildDocument(htmlCode, cssCode);
+
+    const iframeDoc = preview.contentDocument || preview.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(doc);
+    iframeDoc.close();
+
+    // Save
+    localStorage.setItem('live-editor-html', htmlCode);
+    localStorage.setItem('live-editor-css', cssCode);
+  }
+
+  function debouncedUpdate() {
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(updatePreview, 300);
+  }
+
+  htmlEditor.on('change', debouncedUpdate);
+  cssEditor.on('change', debouncedUpdate);
+
+  // Initial preview
+  updatePreview();
+
+  // ============ TOAST ============
+  const toast = document.getElementById('toast');
+  let toastTimer = null;
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2000);
+  }
+
+  // ============ BUTTONS ============
+  document.getElementById('btn-refresh').addEventListener('click', () => {
+    updatePreview();
+    showToast('Đã refresh preview');
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (confirm('Reset code về mặc định? Code hiện tại sẽ mất.')) {
+      htmlEditor.setValue(DEFAULT_HTML);
+      cssEditor.setValue(DEFAULT_CSS);
+      showToast('Đã reset code');
+    }
+  });
+
+  document.getElementById('btn-download').addEventListener('click', () => {
+    const doc = buildDocument(htmlEditor.getValue(), cssEditor.getValue());
+    const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Đã tải index.html');
+  });
+
+  document.getElementById('btn-open').addEventListener('click', () => {
+    const doc = buildDocument(htmlEditor.getValue(), cssEditor.getValue());
+    const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  });
+
+  // Copy buttons
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = btn.getAttribute('data-copy');
+      const code = target === 'html' ? htmlEditor.getValue() : cssEditor.getValue();
+      try {
+        await navigator.clipboard.writeText(code);
+        showToast(`Đã copy ${target.toUpperCase()}`);
+      } catch (err) {
+        showToast('Copy thất bại');
+      }
+    });
+  });
+
+  // Clear buttons
+  document.querySelectorAll('[data-clear]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-clear');
+      if (confirm(`Xóa toàn bộ code ${target.toUpperCase()}?`)) {
+        if (target === 'html') {
+          htmlEditor.setValue('');
+        } else {
+          cssEditor.setValue('');
+        }
+      }
+    });
+  });
+
+  // Keyboard shortcut: Ctrl/Cmd + S to download
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      document.getElementById('btn-download').click();
+    }
+  });
+</script>
+
+</body>
+</html>
